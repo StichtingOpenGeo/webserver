@@ -852,6 +852,22 @@ dynamic_handler_drop_lib = libplugin_drop.la
 endif
 
 
+#
+# Handler zeromq
+#
+handler_zeromq = \
+handler_zeromq.c \
+handler_zeromq.h
+
+libplugin_zeromq_la_LDFLAGS = $(module_ldflags) -lzmq
+libplugin_zeromq_la_SOURCES = $(handler_zeromq)
+
+if STATIC_HANDLER_DROP
+static_handler_zeromq_src = $(handler_zeromq)
+else
+dynamic_handler_zeromq_lib = libplugin_zeromq.la
+endif
+
 
 #
 # Handler streaming
@@ -1543,6 +1559,7 @@ $(static_handler_ssi_src) \
 $(static_handler_secdownload_src) \
 $(static_handler_empty_gif_src) \
 $(static_handler_drop_src) \
+$(static_handler_zeromq_src) \
 $(static_handler_streaming_src) \
 $(static_handler_custom_error_src) \
 $(static_handler_server_info_src) \
@@ -1731,6 +1748,7 @@ $(dynamic_handler_ssi_lib) \
 $(dynamic_handler_secdownload_lib) \
 $(dynamic_handler_empty_gif_lib) \
 $(dynamic_handler_drop_lib) \
+$(dynamic_handler_zeromq_lib) \
 $(dynamic_handler_streaming_lib) \
 $(dynamic_handler_custom_error_lib) \
 $(dynamic_handler_error_redir_lib) \
