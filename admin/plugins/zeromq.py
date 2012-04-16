@@ -53,5 +53,5 @@ class Plugin_zeromq (Handler.PluginHandler):
 	VALS = [("%s!endpoint"%(key),   validations.is_not_empty),
         	("%s!io_threads"%(key), validations.is_number_gt_0)]
 
-	CTK.cfg['%s!encoder!allow' % (key)]
+	CTK.cfg['%s!encoder' % (key)] = 'allow'
 	CTK.publish ('^%s'%(URL_APPLY), CTK.cfg_apply_post, validation=VALS, method="POST")
