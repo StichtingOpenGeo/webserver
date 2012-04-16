@@ -79,7 +79,7 @@ cherokee_handler_zeromq_init (cherokee_handler_zeromq_t *hdl)
 	}
 
 	/* If we end up here that means content is plain, lets set up an encoder */
-	props->encoder_props->instance_func((void **)&hdl->encoder, props->encoder_props);
+	ret = props->encoder_props->instance_func((void **)&hdl->encoder, props->encoder_props);
 	if (unlikely (ret != ret_ok)) {
 		return ret_error;
 	}
@@ -110,8 +110,17 @@ cherokee_handler_zeromq_read_post (cherokee_handler_zeromq_t *hdl)
         ret = cherokee_post_read (&conn->post, &conn->socket, post);
         switch (ret) {
         case ret_ok:
-        case ret_eagain:
+                cherokee_connection_update_timeout (conn);
                 break;
+        case ret_eagain:
+                ret = cherokee_thread_deactive_to_polling (HANDLER_THREAD(hdl),
+                                                           HANDLER_CONN(hdl),
+                                                           conn->socket.socket,
+                                                           FDPOLL_MODE_READ, false);
+                if (ret != ret_ok) {
+                        return ret_error;
+                }
+                return ret_eagain;
         default:
                 conn->error_code = http_bad_request;
                 return ret_error;
