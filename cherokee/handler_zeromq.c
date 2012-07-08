@@ -60,7 +60,11 @@ cherokee_handler_zeromq_init (cherokee_handler_zeromq_t *hdl)
 
 	zmq_msg_init_size (&message, tmp->len);
 	memcpy (zmq_msg_data (&message), tmp->buf, tmp->len);
+#if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
+        zmq_sendmsg (hdl->socket, &message, ZMQ_DONTWAIT | ZMQ_SNDMORE);
+#else
 	zmq_send (hdl->socket, &message, ZMQ_NOBLOCK | ZMQ_SNDMORE);
+#endif
 	zmq_msg_close (&message);
         
 	/* We are going to look for gzipped encoding */
@@ -143,8 +147,12 @@ cherokee_handler_zeromq_read_post (cherokee_handler_zeromq_t *hdl)
 	}
 		
 	zmq_msg_init_size (&message, post->len);
-	memcpy (zmq_msg_data (&message), post->buf, post->len);	
+	memcpy (zmq_msg_data (&message), post->buf, post->len);
+#if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
+        zmq_sendmsg (hdl->socket, &message, (re ? ZMQ_DONTWAIT  : ZMQ_DONTWAIT | ZMQ_SNDMORE));
+#else	
 	zmq_send (hdl->socket, &message, (re ? ZMQ_NOBLOCK : ZMQ_NOBLOCK | ZMQ_SNDMORE));
+#endif
 	zmq_msg_close (&message);
 
 	return ret;
