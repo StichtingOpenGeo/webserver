@@ -75,7 +75,7 @@ NOTE_INDEX_USAGE      = N_('Remember that only "File Exists" rules and "List & S
 NOTE_MATCH_NICK       = N_('Use this nickname as an additional host name for this virtual server (Default: yes)')
 NOTE_HSTS             = N_('Enforce HTTPS by using the HTTP Strict Transport Security.')
 NOTE_HSTS_MAXAGE      = N_("How long the client's browser should remember the forced HTTPS (in seconds).")
-NOTE_HSTS_SUBDOMAINS  = N_("Should HSTS be used in all the subdomains of this virtual verser (Default: yes).")
+NOTE_HSTS_SUBDOMAINS  = N_("Should HSTS be used in all the subdomains of this virtual server (Default: yes).")
 
 DEFAULT_HOST_NOTE     = N_("<p>The 'default' virtual server matches all the domain names.</p>")
 
@@ -686,7 +686,7 @@ class SecutiryWidgetContent (CTK.Container):
 
         if int(CTK.cfg.get_val('%s!hsts' %(pre), "0")):
             table.Add (_('HSTS Max-Age'),       CTK.TextCfg ('%s!hsts!max_age'%(pre), True, {'optional_string':_("One year")}), _(NOTE_HSTS_MAXAGE))
-            table.Add (_('Include Subdomains'), CTK.CheckCfgText ('%s!subdomains'%(pre), True, _('Include all')), _(NOTE_HSTS_SUBDOMAINS))
+            table.Add (_('Include Subdomains'), CTK.CheckCfgText ('%s!hsts!subdomains'%(pre), True, _('Include all')), _(NOTE_HSTS_SUBDOMAINS))
 
         submit = CTK.Submitter (url_apply)
         submit.bind ('submit_success', refreshable.JS_to_refresh())
