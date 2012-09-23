@@ -89,8 +89,12 @@ cherokee_handler_zeromq_init (cherokee_handler_zeromq_t *hdl)
 	}
 
 	ret = cherokee_encoder_init (hdl->encoder, conn);
-
-	return ret_ok;
+	
+	/* TODO: this is a great idea for KV78turbo, but being able to configure
+	 * the reply (KV6, 15, 17) sounds like a good idea too.
+	 */
+	conn->error_code = http_no_content;
+	return ret_error;
 }
 
 ret_t
