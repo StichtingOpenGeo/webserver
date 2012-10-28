@@ -69,6 +69,7 @@ HANDLERS = [
     ('empty_gif',    N_('1x1 Transparent GIF')),
     ('drop',         N_('Drop Connection')),
     ('zeromq',       N_('ZeroMQ PUSH')),
+    ('tmi',          N_('TMI ZeroMQ PUSH')),
 ]
 
 ERROR_HANDLERS = [
