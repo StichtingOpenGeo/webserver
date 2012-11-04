@@ -73,24 +73,53 @@ cherokee_handler_tmi_init (cherokee_handler_tmi_t *hdl)
 	ret = cherokee_header_copy_known (&conn->header, header_content_encoding, tmp);
 	if (ret == ret_ok && cherokee_buffer_cmp_str(tmp, "gzip") == 0) {
 		TRACE(ENTRIES, "ZeroMQ: incomming header '%s'\n", tmp->buf);
-		return ret_ok;
+        hdl->inflated = true;
 	} else {
 		cherokee_buffer_clean (tmp);
-	        ret = cherokee_header_copy_known (&conn->header, header_content_type, tmp);
-        	if (ret == ret_ok && (cherokee_buffer_cmp_str(tmp, "application/gzip") == 0 || cherokee_buffer_cmp_str(tmp, "application/zip") == 0)) {
+	    ret = cherokee_header_copy_known (&conn->header, header_content_type, tmp);
+       	if (ret == ret_ok && (cherokee_buffer_cmp_str(tmp, "application/gzip") == 0 || cherokee_buffer_cmp_str(tmp, "application/zip") == 0)) {
 			TRACE(ENTRIES, "ZeroMQ: incomming header '%s'\n", tmp->buf);
-			return ret_ok;
-		}
+            hdl->inflated = true;
+		} else {
+            hdl->inflated = false;
+        }
 	}
 
-	/* If we end up here that means content is plain, lets set up an encoder */
-	ret = props->encoder_props->instance_func((void **)&hdl->encoder, props->encoder_props);
-	if (unlikely (ret != ret_ok)) {
-		return ret_error;
-	}
+#ifdef LIBXML_PUSH_ENABLED
+    if (props->validate_xml) {
+        hdl->validate_xml = true;
+        hdl->ctxt = xmlCreatePushParserCtxt(NULL, NULL, NULL, 0, NULL);
+        xmlCtxtUseOptions(hdl->ctxt, XML_PARSE_NOERROR | XML_PARSE_NOWARNING | XML_PARSE_NONET | XML_PARSE_COMPACT);
 
-	ret = cherokee_encoder_init (hdl->encoder, conn);
-	return ret;
+        if (hdl->inflated) {
+            int z_ret;
+            /* allocate inflate state */
+            hdl->strm.zalloc = Z_NULL;
+            hdl->strm.zfree = Z_NULL;
+            hdl->strm.opaque = Z_NULL;
+            hdl->strm.avail_in = 0;
+            hdl->strm.next_in = Z_NULL;
+            z_ret = inflateInit2(&(hdl->strm), 16+MAX_WBITS);
+            if (z_ret != Z_OK)
+                hdl->validate_xml = false;
+        }
+    }
+#endif
+
+    if (!hdl->inflated) {
+        /* If we end up here that means content is plain, lets set up an encoder */
+        ret = props->encoder_props->instance_func((void **)&hdl->encoder, props->encoder_props);
+        if (unlikely (ret != ret_ok)) {
+            return ret_error;
+        }
+
+        ret = cherokee_encoder_init (hdl->encoder, conn);
+        if (unlikely (ret != ret_ok)) {
+            return ret_error;
+        }
+    }
+
+    return ret_ok;
 }
 
 ret_t
@@ -100,7 +129,7 @@ cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
 	int                      re;
         ret_t                    ret;
 	cherokee_buffer_t       *post = &HANDLER_THREAD(hdl)->tmp_buf1;
-	cherokee_buffer_t       *out  = &HANDLER_THREAD(hdl)->tmp_buf2;
+	cherokee_buffer_t       *encoded = &HANDLER_THREAD(hdl)->tmp_buf2;
         cherokee_connection_t   *conn = HANDLER_CONN(hdl);
 
         /* Check for the post info
@@ -135,19 +164,21 @@ cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
 	re = cherokee_post_read_finished (&conn->post);
 	ret = re ? ret_ok : ret_eagain;
 
+    cherokee_buffer_clean(encoded);
 	if (hdl->encoder != NULL) {
-		cherokee_buffer_clean(out);
 		if (ret == ret_ok) {
-			cherokee_encoder_flush(hdl->encoder, post, out);
+			cherokee_encoder_flush(hdl->encoder, post, encoded);
 		} else {
-			cherokee_encoder_encode(hdl->encoder, post, out);
+			cherokee_encoder_encode(hdl->encoder, post, encoded);
 		}
+	} else {
+        encoded = post;
+    }
 
-		post = out;
-	}
-		
-	zmq_msg_init_size (&message, post->len);
-	memcpy (zmq_msg_data (&message), post->buf, post->len);
+    /* First priority: send data to our PubSub */    
+
+    zmq_msg_init_size (&message, encoded->len);
+	memcpy (zmq_msg_data (&message), encoded->buf, encoded->len);
 #if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
         zmq_sendmsg (hdl->socket, &message, (re ? ZMQ_DONTWAIT  : ZMQ_DONTWAIT | ZMQ_SNDMORE));
 #else	
@@ -155,7 +186,40 @@ cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
 #endif
 	zmq_msg_close (&message);
 
-	return ret;
+
+#ifdef LIBXML_PUSH_ENABLED
+    if (hdl->validate_xml) {
+        if (hdl->inflated) {
+            hdl->strm.avail_in = post->len;
+            hdl->strm.next_in = post->buf;
+            
+            /* run inflate() on input until output buffer not full */
+            do  {
+                #define CHUNK 131072
+                int have;
+                int z_ret;
+                char out[CHUNK];
+                hdl->strm.avail_out = CHUNK;
+                hdl->strm.next_out = out;
+                z_ret = inflate(&(hdl->strm), Z_NO_FLUSH);
+                switch (z_ret) {
+                case Z_NEED_DICT:
+                    z_ret = Z_DATA_ERROR;     /* and fall through */
+                case Z_DATA_ERROR:
+                case Z_MEM_ERROR:
+                case Z_STREAM_ERROR:
+                    return ret_error;
+                }
+                have = CHUNK - hdl->strm.avail_out;
+                xmlParseChunk(hdl->ctxt, out, have, 0);
+            } while (hdl->strm.avail_out == 0);
+        } else {
+            xmlParseChunk(hdl->ctxt, post->buf, post->len, 0);
+        }
+    }
+#endif
+
+	return ret_ok;
 }
 
 ret_t
@@ -169,11 +233,28 @@ ret_t
 cherokee_handler_tmi_step (cherokee_handler_tmi_t *hdl, cherokee_buffer_t *buffer)
 {
 	char time_buf[21];
-	strftime(time_buf, 21, "%Y-%m-%dT%H:%S:%MZ", &cherokee_bogonow_tmgmt);
+    size_t len;
+    cherokee_boolean_t wellformed = true;
 
+#ifdef LIBXML_PUSH_ENABLED
+    if (hdl->validate_xml) {
+        xmlParseChunk(hdl->ctxt, NULL, 0, 1);
+        wellformed = (hdl->ctxt->wellFormed == 1);
+    }
+#endif
+
+	len = strftime(time_buf, 21, "%Y-%m-%dT%H:%S:%MZ", &cherokee_bogonow_tmgmt);
 	cherokee_buffer_add_buffer (buffer, &HANDLER_TMI_PROPS(hdl)->reply);
-	cherokee_buffer_add_va(buffer, "%s</tmi8:Timestamp><tmi8:ResponseCode>%s</tmi8:ResponseCode></tmi8:VV_TM_RES>", time_buf, "OK");
-        return ret_eof_have_data;
+    cherokee_buffer_add (buffer, time_buf, len);
+    cherokee_buffer_add_str (buffer, "</tmi8:Timestamp><tmi8:ResponseCode>");
+    if (wellformed) {
+        cherokee_buffer_add_str(buffer, "OK");
+    } else {
+        cherokee_buffer_add_str(buffer, "SE");
+    }
+    cherokee_buffer_add_str (buffer, "</tmi8:ResponseCode></tmi8:VV_TM_RES>");
+	/* cherokee_buffer_add_va(buffer, "%s</tmi8:Timestamp><tmi8:ResponseCode>%s</tmi8:ResponseCode></tmi8:VV_TM_RES>", time_buf, (wellformed ? "OK" : "SE")); */
+    return ret_eof_have_data;
 }
 
 static ret_t
@@ -183,6 +264,14 @@ tmi_free (cherokee_handler_tmi_t *hdl)
 	
 	if (hdl->encoder)
 		cherokee_encoder_free (hdl->encoder);
+
+#ifdef LIBXML_PUSH_ENABLED
+    if (hdl->inflated)
+        (void)inflateEnd(&(hdl->strm));
+    
+    xmlFreeDoc(hdl->ctxt->myDoc);
+    xmlFreeParserCtxt(hdl->ctxt);
+#endif
 
 	return ret_ok;
 }
@@ -255,6 +344,7 @@ cherokee_handler_tmi_configure (cherokee_config_node_t  *conf,
 		cherokee_buffer_init (&n->dossiername);
 		cherokee_buffer_init (&n->endpoint);
 		n->io_threads = 1;
+        n->validate_xml = false;
 
 		*_props = MODULE_PROPS(n);
 	}
@@ -287,6 +377,8 @@ cherokee_handler_tmi_configure (cherokee_config_node_t  *conf,
 			cherokee_buffer_add_buffer (&props->endpoint, &subconf->val);
 		} else if (equal_buf_str (&subconf->key, "io_threads")) {
 			props->io_threads = atoi(subconf->val.buf);
+		} else if (equal_buf_str (&subconf->key, "validate_xml")) {
+			cherokee_atob (subconf->val.buf, &props->validate_xml);
 		} else if (equal_buf_str (&subconf->key, "encoder") && info->configure) {
 			encoder_func_configure_t configure = info->configure;
 			props->encoder_props = NULL;

@@ -875,8 +875,9 @@ handler_tmi = \
 handler_tmi.c \
 handler_tmi.h
 
-libplugin_tmi_la_LDFLAGS = $(module_ldflags) -lzmq
+libplugin_tmi_la_LDFLAGS = $(module_ldflags) -lzmq -lxml2
 libplugin_tmi_la_SOURCES = $(handler_tmi)
+libplugin_tmi_la_CFLAGS  = -I/usr/include/libxml2
 
 if STATIC_HANDLER_DROP
 static_handler_tmi_src = $(handler_tmi)

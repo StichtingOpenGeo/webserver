@@ -33,7 +33,10 @@
 #include "connection.h"
 #include "server-protected.h"
 
+#include <zlib.h>
 #include <zmq.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 typedef struct {
 	cherokee_module_props_t   base;
@@ -42,15 +45,23 @@ typedef struct {
 	cherokee_buffer_t	  dossiername;
 	cherokee_buffer_t	  endpoint;
 	cherokee_buffer_t	  reply;
-	cuint_t                   io_threads;
+    cherokee_boolean_t    validate_xml;
+	cuint_t               io_threads;
 	void *		          context;
 	cherokee_encoder_props_t *encoder_props;
 } cherokee_handler_tmi_props_t;
 
 typedef struct {
-	cherokee_handler_t        base;
-	void		         *socket;
-	cherokee_encoder_t       *encoder;
+	cherokee_handler_t    base;
+	void                 *socket;
+	cherokee_encoder_t   *encoder;
+#ifdef LIBXML_PUSH_ENABLED
+    z_stream              strm;
+    xmlParserCtxtPtr      ctxt;
+
+    cherokee_boolean_t    inflated;
+    cherokee_boolean_t    validate_xml;
+#endif
 } cherokee_handler_tmi_t;
 
 #define HDL_TMI(x)           ((cherokee_handler_tmi_t *)(x))
