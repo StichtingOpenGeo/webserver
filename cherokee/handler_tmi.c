@@ -306,6 +306,7 @@ cherokee_handler_tmi_new (cherokee_handler_t     **hdl,
 		return ret_error;
 	}
 	n->encoder = NULL;
+	n->validate_xml = false;
 
 	*hdl = HANDLER(n);
 	return ret_ok;
