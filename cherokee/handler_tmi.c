@@ -260,17 +260,20 @@ cherokee_handler_tmi_step (cherokee_handler_tmi_t *hdl, cherokee_buffer_t *buffe
 static ret_t
 tmi_free (cherokee_handler_tmi_t *hdl)
 {
+	cherokee_handler_tmi_props_t *props = HANDLER_TMI_PROPS(hdl);
 	zmq_close (hdl->socket);
 	
 	if (hdl->encoder)
 		cherokee_encoder_free (hdl->encoder);
 
 #ifdef LIBXML_PUSH_ENABLED
-    if (hdl->inflated)
-        (void)inflateEnd(&(hdl->strm));
-    
-    xmlFreeDoc(hdl->ctxt->myDoc);
-    xmlFreeParserCtxt(hdl->ctxt);
+	if (props->validate_xml) {
+		if (hdl->inflated)
+			(void)inflateEnd(&(hdl->strm));
+
+		xmlFreeDoc(hdl->ctxt->myDoc);
+		xmlFreeParserCtxt(hdl->ctxt);
+	}
 #endif
 
 	return ret_ok;
