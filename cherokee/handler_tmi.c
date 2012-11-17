@@ -29,6 +29,7 @@
 #include "thread.h"
 #include "util.h"
 #include "bogotime.h"
+#include "zlib.h"
 
 #define ENTRIES "tmi"
 
@@ -128,6 +129,7 @@ cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
 	zmq_msg_t message;
 	int                      re;
         ret_t                    ret;
+        ret_t                    ret_final;
 	cherokee_buffer_t       *post = &HANDLER_THREAD(hdl)->tmp_buf1;
 	cherokee_buffer_t       *encoded = &HANDLER_THREAD(hdl)->tmp_buf2;
         cherokee_connection_t   *conn = HANDLER_CONN(hdl);
@@ -162,7 +164,7 @@ cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
 	TRACE (ENTRIES, "Post contains: '%s'\n", post->buf);
 
 	re = cherokee_post_read_finished (&conn->post);
-	ret = re ? ret_ok : ret_eagain;
+	ret_final = re ? ret_ok : ret_eagain;
 
     cherokee_buffer_clean(encoded);
 	if (hdl->encoder != NULL) {
@@ -219,7 +221,7 @@ cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
     }
 #endif
 
-	return ret_ok;
+	return ret_final;
 }
 
 ret_t
