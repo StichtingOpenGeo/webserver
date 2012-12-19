@@ -34,6 +34,7 @@ NOTE_SUBSCRIBERID = N_("SubscriberID in the result document.")
 NOTE_VERSION      = N_("Version in the result document.")
 NOTE_DOSSIERNAME  = N_("DossierName in the result document.")
 NOTE_ENDPOINT     = N_("Endpoint to push to.")
+NOTE_VALIDATE_XML = N_("Validate XML.")
 NOTE_IO_THREADS   = N_("Number of I/O-threads to use for ZeroMQ.")
 NOTE_LEVEL        = N_("Compression Level from 0 to 9, where 0 is no compression, 1 best speed, and 9 best compression.")
 
@@ -49,7 +50,8 @@ class Plugin_tmi (Handler.PluginHandler):
         table.Add (_('Version'), CTK.TextCfg('%s!version'%(key), False),  _(NOTE_VERSION))
         table.Add (_('Dossier Name'), CTK.TextCfg('%s!dossiername'%(key), False),  _(NOTE_DOSSIERNAME))
         table.Add (_('Endpoint'), CTK.TextCfg('%s!endpoint'%(key), False),  _(NOTE_ENDPOINT))
-        table.Add (_('I/O Threads'), CTK.TextCfg('%s!io_threads'%(key), True),  _(NOTE_IO_THREADS))
+        table.Add (_('Validate XML'), CTK.CheckCfgText('%s!validate_xml'%(key), False),  _(NOTE_VALIDATE_XML))
+	table.Add (_('I/O Threads'), CTK.TextCfg('%s!io_threads'%(key), True),  _(NOTE_IO_THREADS))
 	table.Add (_("Compression Level"), CTK.ComboCfg('%s!encoder!compression_level'%(key), consts.COMPRESSION_LEVELS), _(NOTE_LEVEL))
         submit = CTK.Submitter (URL_APPLY)
         submit += table
