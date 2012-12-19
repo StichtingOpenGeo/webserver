@@ -154,8 +154,8 @@ cherokee_handler_zeromq_read_post (cherokee_handler_zeromq_t *hdl)
         /* Atomic Section */
         CHEROKEE_MUTEX_LOCK (&props->mutex);
         #if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
-        zmq_sendmsg (props->socket, &envelope, ZMQ_DONTWAIT | ZMQ_SNDMORE);
-        zmq_sendmsg (props->socket, &message, ZMQ_DONTWAIT);
+        zmq_msg_send (&envelope, props->socket, ZMQ_DONTWAIT | ZMQ_SNDMORE);
+        zmq_msg_send (&message, props->socket, ZMQ_DONTWAIT);
         #else
         zmq_send (props->socket, &envelope, ZMQ_NOBLOCK | ZMQ_SNDMORE);
         zmq_send (props->socket, &message, ZMQ_NOBLOCK);
