@@ -36,37 +36,11 @@ PLUGIN_INFO_HANDLER_EASIEST_INIT (zeromq, http_post);
 ret_t
 cherokee_handler_zeromq_init (cherokee_handler_zeromq_t *hdl)
 {
-	ret_t ret;
-	cherokee_connection_t *conn = HANDLER_CONN(hdl);
+    ret_t                    ret;
 	cherokee_buffer_t     *tmp  = &HANDLER_THREAD(hdl)->tmp_buf1;
+	cherokee_connection_t *conn = HANDLER_CONN(hdl);
 	cherokee_handler_zeromq_props_t *props = HANDLER_ZEROMQ_PROPS(hdl);
-	zmq_msg_t message;
-	cuint_t len;
 
-        if ((cherokee_buffer_is_empty (&conn->web_directory)) ||
-            (cherokee_buffer_is_ending (&conn->web_directory, '/')))
-        {
-                len = conn->web_directory.len;
-        } else {
-                len = conn->web_directory.len + 1;
-        }
-
-        cherokee_buffer_clean (tmp);
-        cherokee_buffer_add   (tmp,
-                               conn->request.buf + len,
-                               conn->request.len - len);
-
-	TRACE(ENTRIES, "ZeroMQ: incomming path '%s'\n", tmp->buf);
-
-	zmq_msg_init_size (&message, tmp->len);
-	memcpy (zmq_msg_data (&message), tmp->buf, tmp->len);
-#if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
-        zmq_sendmsg (hdl->socket, &message, ZMQ_DONTWAIT | ZMQ_SNDMORE);
-#else
-	zmq_send (hdl->socket, &message, ZMQ_NOBLOCK | ZMQ_SNDMORE);
-#endif
-	zmq_msg_close (&message);
-        
 	/* We are going to look for gzipped encoding */
 	cherokee_buffer_clean (tmp);
 	ret = cherokee_header_copy_known (&conn->header, header_content_encoding, tmp);
@@ -89,8 +63,7 @@ cherokee_handler_zeromq_init (cherokee_handler_zeromq_t *hdl)
 	}
 
 	ret = cherokee_encoder_init (hdl->encoder, conn);
-	
-	/* TODO: this is a great idea for KV78turbo, but being able to configure
+        /* TODO: this is a great idea for KV78turbo, but being able to configure
 	 * the reply (KV6, 15, 17) sounds like a good idea too.
 	 */
 	conn->error_code = http_no_content;
@@ -102,17 +75,17 @@ cherokee_handler_zeromq_read_post (cherokee_handler_zeromq_t *hdl)
 {
 	zmq_msg_t message;
 	int                      re;
-        ret_t                    ret;
+    ret_t                    ret;
 	cherokee_buffer_t       *post = &HANDLER_THREAD(hdl)->tmp_buf1;
 	cherokee_buffer_t       *out  = &HANDLER_THREAD(hdl)->tmp_buf2;
-        cherokee_connection_t   *conn = HANDLER_CONN(hdl);
+    cherokee_connection_t   *conn = HANDLER_CONN(hdl);
 
-        /* Check for the post info
-         */
-        if (! conn->post.has_info) {
-                conn->error_code = http_bad_request;
-                return ret_error;
-        }
+    /* Check for the post info
+        */
+    if (! conn->post.has_info) {
+            conn->error_code = http_bad_request;
+            return ret_error;
+    }
 
 	cherokee_buffer_clean (post);
         ret = cherokee_post_read (&conn->post, &conn->socket, post);
@@ -149,15 +122,49 @@ cherokee_handler_zeromq_read_post (cherokee_handler_zeromq_t *hdl)
 
 		post = out;
 	}
-		
-	zmq_msg_init_size (&message, post->len);
-	memcpy (zmq_msg_data (&message), post->buf, post->len);
-#if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
-        zmq_sendmsg (hdl->socket, &message, (re ? ZMQ_DONTWAIT  : ZMQ_DONTWAIT | ZMQ_SNDMORE));
-#else	
-	zmq_send (hdl->socket, &message, (re ? ZMQ_NOBLOCK : ZMQ_NOBLOCK | ZMQ_SNDMORE));
-#endif
-	zmq_msg_close (&message);
+    
+    cherokee_buffer_add_buffer(&hdl->output, post);
+	
+    if (ret == ret_ok) {
+        cherokee_buffer_t     *tmp  = &HANDLER_THREAD(hdl)->tmp_buf1;
+        cherokee_handler_zeromq_props_t *props = HANDLER_ZEROMQ_PROPS(hdl);
+        zmq_msg_t envelope;
+        zmq_msg_t message;
+        cuint_t len;
+
+        if ((cherokee_buffer_is_empty (&conn->web_directory)) ||
+            (cherokee_buffer_is_ending (&conn->web_directory, '/')))
+        {
+                len = conn->web_directory.len;
+        } else {
+                len = conn->web_directory.len + 1;
+        }
+
+        cherokee_buffer_clean (tmp);
+        cherokee_buffer_add   (tmp, conn->request.buf + len,
+                                    conn->request.len - len);
+
+        TRACE(ENTRIES, "ZeroMQ: incomming path '%s'\n", tmp->buf);
+
+        zmq_msg_init_size (&envelope, tmp->len);
+        memcpy (zmq_msg_data (&envelope), tmp->buf, tmp->len);
+        zmq_msg_init_size (&message, hdl->output.len);
+        memcpy (zmq_msg_data (&message), hdl->output.buf, hdl->output.len);
+
+        /* Atomic Section */
+        CHEROKEE_MUTEX_LOCK (&props->mutex);
+        #if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
+        zmq_sendmsg (props->socket, &envelope, ZMQ_DONTWAIT | ZMQ_SNDMORE);
+        zmq_sendmsg (props->socket, &message, ZMQ_DONTWAIT);
+        #else
+        zmq_send (props->socket, &envelope, ZMQ_NOBLOCK | ZMQ_SNDMORE);
+        zmq_send (props->socket, &message, ZMQ_NOBLOCK);
+        #endif
+        CHEROKEE_MUTEX_UNLOCK (&props->mutex);
+
+        zmq_msg_close (&envelope);
+        zmq_msg_close (&message);
+    }
 
 	return ret;
 }
@@ -171,16 +178,17 @@ cherokee_handler_zeromq_add_headers (cherokee_handler_zeromq_t *hdl, cherokee_bu
 ret_t
 cherokee_handler_zeromq_step (cherokee_handler_zeromq_t *hdl, cherokee_buffer_t *buffer)
 {
-        return ret_eof_have_data;
+    return ret_eof_have_data;
 }
 
 static ret_t
 zeromq_free (cherokee_handler_zeromq_t *hdl)
 {
-	zmq_close (hdl->socket);
+	cherokee_buffer_mrproper (&hdl->output);
 	
 	if (hdl->encoder)
 		cherokee_encoder_free (hdl->encoder);
+
 
 	return ret_ok;
 }
@@ -205,12 +213,9 @@ cherokee_handler_zeromq_new (cherokee_handler_t     **hdl,
 	/* Supported features
 	 */
 	HANDLER(n)->support     = hsupport_nothing;
-	
-	n->socket = zmq_socket(PROP_ZEROMQ(props)->context, ZMQ_PUSH);
-	if (zmq_connect (n->socket, PROP_ZEROMQ(props)->endpoint.buf) != 0) {
-		TRACE(ENTRIES, "ZeroMQ Connect: can't connect to '%s'\n", PROP_ZEROMQ(props)->endpoint.buf);
-		return ret_error;
-	}
+	 
+    cherokee_buffer_init (&n->output);
+    cherokee_buffer_ensure_size (&n->output, 2097152);
 	n->encoder = NULL;
 
 	*hdl = HANDLER(n);
@@ -220,6 +225,7 @@ cherokee_handler_zeromq_new (cherokee_handler_t     **hdl,
 static ret_t 
 props_free  (cherokee_handler_zeromq_props_t *props)
 {
+	zmq_close (props->socket);
 	zmq_term (props->context);
 	cherokee_buffer_mrproper (&props->endpoint);
 	return ret_ok;
@@ -244,6 +250,7 @@ cherokee_handler_zeromq_configure (cherokee_config_node_t  *conf,
 						  MODULE_PROPS_FREE(props_free));
 		cherokee_buffer_init (&n->endpoint);
 		n->io_threads = 1;
+        CHEROKEE_MUTEX_INIT (&n->mutex, CHEROKEE_MUTEX_FAST);
 
 		*_props = MODULE_PROPS(n);
 	}
@@ -282,6 +289,12 @@ cherokee_handler_zeromq_configure (cherokee_config_node_t  *conf,
 	}
 	
 	props->context = zmq_init (props->io_threads);
+	
+    props->socket = zmq_socket(props->context, ZMQ_PUSH);
+	if (zmq_connect (props->socket, props->endpoint.buf) != 0) {
+		TRACE(ENTRIES, "ZeroMQ Connect: can't connect to '%s'\n", props->endpoint.buf);
+		return ret_error;
+	}
 	
 	return ret_ok;
 }

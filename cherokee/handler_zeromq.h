@@ -37,16 +37,18 @@
 
 typedef struct {
 	cherokee_module_props_t   base;
-	cherokee_buffer_t	  endpoint;
+	cherokee_buffer_t         endpoint;
 	cuint_t                   io_threads;
-	void *		          context;
+	void *                    context;
+	void                     *socket;
 	cherokee_encoder_props_t *encoder_props;
+    CHEROKEE_MUTEX_T         (mutex);
 } cherokee_handler_zeromq_props_t;
 
 typedef struct {
 	cherokee_handler_t        base;
-	void		         *socket;
 	cherokee_encoder_t       *encoder;
+    cherokee_buffer_t         output;
 } cherokee_handler_zeromq_t;
 
 #define HDL_ZEROMQ(x)           ((cherokee_handler_zeromq_t *)(x))
