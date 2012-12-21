@@ -868,6 +868,22 @@ else
 dynamic_handler_zeromq_lib = libplugin_zeromq.la
 endif
 
+#
+# Handler tmi
+#
+handler_tmi = \
+handler_tmi.c \
+handler_tmi.h
+
+libplugin_tmi_la_LDFLAGS = $(module_ldflags) -lzmq -lxml2
+libplugin_tmi_la_SOURCES = $(handler_tmi)
+libplugin_tmi_la_CFLAGS  = -I/usr/include/libxml2
+
+if STATIC_HANDLER_DROP
+static_handler_tmi_src = $(handler_tmi)
+else
+dynamic_handler_tmi_lib = libplugin_tmi.la
+endif
 
 #
 # Handler streaming
@@ -1560,6 +1576,7 @@ $(static_handler_secdownload_src) \
 $(static_handler_empty_gif_src) \
 $(static_handler_drop_src) \
 $(static_handler_zeromq_src) \
+$(static_handler_tmi_src) \
 $(static_handler_streaming_src) \
 $(static_handler_custom_error_src) \
 $(static_handler_server_info_src) \
@@ -1749,6 +1766,7 @@ $(dynamic_handler_secdownload_lib) \
 $(dynamic_handler_empty_gif_lib) \
 $(dynamic_handler_drop_lib) \
 $(dynamic_handler_zeromq_lib) \
+$(dynamic_handler_tmi_lib) \
 $(dynamic_handler_streaming_lib) \
 $(dynamic_handler_custom_error_lib) \
 $(dynamic_handler_error_redir_lib) \

@@ -53,7 +53,8 @@ wildcard.py \
 gzip.py \
 deflate.py \
 drop.py \
-zeromq.py
+zeromq.py \
+tmi.py
 
 EXTRA_DIST = \
 $(adminplugins_DATA)

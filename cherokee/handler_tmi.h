@@ -23,8 +23,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef CHEROKEE_HANDLER_ZEROMQ_H
-#define CHEROKEE_HANDLER_ZEROMQ_H
+#ifndef CHEROKEE_HANDLER_TMI_H
+#define CHEROKEE_HANDLER_TMI_H
 
 #include "common-internal.h"
 #include "handler.h"
@@ -33,36 +33,49 @@
 #include "connection.h"
 #include "server-protected.h"
 
+#include <zlib.h>
 #include <zmq.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 typedef struct {
 	cherokee_module_props_t   base;
-	cherokee_buffer_t         endpoint;
-	cuint_t                   io_threads;
-	void *                    context;
-	void                     *socket;
+	cherokee_buffer_t	  subscriberid;
+	cherokee_buffer_t	  version;
+	cherokee_buffer_t	  dossiername;
+	cherokee_buffer_t	  endpoint;
+	cherokee_buffer_t	  reply;
+    cherokee_boolean_t    validate_xml;
+	cuint_t               io_threads;
+	void *		          context;
 	cherokee_encoder_props_t *encoder_props;
-    CHEROKEE_MUTEX_T         (mutex);
-} cherokee_handler_zeromq_props_t;
+} cherokee_handler_tmi_props_t;
 
 typedef struct {
-	cherokee_handler_t        base;
-	cherokee_encoder_t       *encoder;
-    cherokee_buffer_t         output;
-} cherokee_handler_zeromq_t;
+	cherokee_handler_t    base;
+	void                 *socket;
+	cherokee_encoder_t   *encoder;
+#ifdef LIBXML_PUSH_ENABLED
+    z_stream              strm;
+    xmlParserCtxtPtr      ctxt;
 
-#define HDL_ZEROMQ(x)           ((cherokee_handler_zeromq_t *)(x))
-#define PROP_ZEROMQ(x)          ((cherokee_handler_zeromq_props_t *)(x))
-#define HANDLER_ZEROMQ_PROPS(x) (PROP_ZEROMQ(MODULE(x)->props))
+    cherokee_boolean_t    inflated;
+    cherokee_boolean_t    validate_xml;
+#endif
+} cherokee_handler_tmi_t;
+
+#define HDL_TMI(x)           ((cherokee_handler_tmi_t *)(x))
+#define PROP_TMI(x)          ((cherokee_handler_tmi_props_t *)(x))
+#define HANDLER_TMI_PROPS(x) (PROP_TMI(MODULE(x)->props))
 
 /* Library init function
  */
-void PLUGIN_INIT_NAME(zeromq)      (cherokee_plugin_loader_t *loader);
+void PLUGIN_INIT_NAME(tmi)      (cherokee_plugin_loader_t *loader);
 
 /* Methods
  */
-ret_t cherokee_handler_zeromq_new  (cherokee_handler_t **hdl, void *cnt, cherokee_module_props_t *props);
-ret_t cherokee_handler_zeromq_free (cherokee_handler_zeromq_t *hdl);
-ret_t cherokee_handler_zeromq_init (cherokee_handler_zeromq_t *hdl);
+ret_t cherokee_handler_tmi_new  (cherokee_handler_t **hdl, void *cnt, cherokee_module_props_t *props);
+ret_t cherokee_handler_tmi_free (cherokee_handler_tmi_t *hdl);
+ret_t cherokee_handler_tmi_init (cherokee_handler_tmi_t *hdl);
 
-#endif /* CHEROKEE_HANDLER_ZEROMQ_H */
+#endif /* CHEROKEE_HANDLER_TMI_H */
