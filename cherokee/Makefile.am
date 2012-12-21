@@ -859,8 +859,8 @@ handler_zeromq = \
 handler_zeromq.c \
 handler_zeromq.h
 
-libplugin_zeromq_la_LDFLAGS = $(module_ldflags) -lzmq
-libplugin_zeromq_la_SOURCES = $(handler_zeromq)
+libplugin_zeromq_la_LDFLAGS = $(module_ldflags) -L/usr/local/lib -lzmq
+libplugin_zeromq_la_SOURCES = $(handler_zeromq) -I/usr/local/include
 
 if STATIC_HANDLER_DROP
 static_handler_zeromq_src = $(handler_zeromq)
