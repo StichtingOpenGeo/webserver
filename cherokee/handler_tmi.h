@@ -48,19 +48,23 @@ typedef struct {
     cherokee_boolean_t    validate_xml;
 	cuint_t               io_threads;
 	void *		          context;
+	void                 *socket;
+    CHEROKEE_MUTEX_T     (mutex);
 	cherokee_encoder_props_t *encoder_props;
 } cherokee_handler_tmi_props_t;
 
 typedef struct {
 	cherokee_handler_t    base;
-	void                 *socket;
 	cherokee_encoder_t   *encoder;
+    cherokee_buffer_t     output;
 #ifdef LIBXML_PUSH_ENABLED
     z_stream              strm;
     xmlParserCtxtPtr      ctxt;
 
     cherokee_boolean_t    inflated;
     cherokee_boolean_t    validate_xml;
+
+    int                   z_ret;
 #endif
 } cherokee_handler_tmi_t;
 
