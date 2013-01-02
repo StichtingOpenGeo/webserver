@@ -33,8 +33,8 @@
 #include "connection.h"
 #include "server-protected.h"
 
+#include "zmq-shim.h"
 #include <zlib.h>
-#include <zmq.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 

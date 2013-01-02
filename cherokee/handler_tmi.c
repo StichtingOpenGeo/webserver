@@ -180,13 +180,8 @@ cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
 
 		/* Atomic Section */
 		CHEROKEE_MUTEX_LOCK (&props->mutex);
-		#if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
-        zmq_msg_send (&envelope, props->socket, ZMQ_DONTWAIT | ZMQ_SNDMORE);
-        zmq_msg_send (&message, props->socket, ZMQ_DONTWAIT);
-		#else
-		zmq_send (props->socket, &envelope, ZMQ_NOBLOCK | ZMQ_SNDMORE);
-		zmq_send (props->socket, &message, ZMQ_NOBLOCK);
-		#endif
+		zmq_msg_send (&envelope, props->socket, ZMQ_DONTWAIT | ZMQ_SNDMORE);
+		zmq_msg_send (&message, props->socket, ZMQ_DONTWAIT);
 		CHEROKEE_MUTEX_UNLOCK (&props->mutex);
 
 		zmq_msg_close (&envelope);

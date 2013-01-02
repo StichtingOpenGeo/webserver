@@ -33,7 +33,7 @@
 #include "connection.h"
 #include "server-protected.h"
 
-#include <zmq.h>
+#include "zmq-shim.h"
 
 typedef struct {
 	cherokee_module_props_t   base;
