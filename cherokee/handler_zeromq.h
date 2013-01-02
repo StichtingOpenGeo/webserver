@@ -41,8 +41,8 @@ typedef struct {
 	cuint_t                   io_threads;
 	void *                    context;
 	void                     *socket;
-	cherokee_encoder_props_t *encoder_props;
     CHEROKEE_MUTEX_T         (mutex);
+	cherokee_encoder_props_t *encoder_props;
 } cherokee_handler_zeromq_props_t;
 
 typedef struct {
