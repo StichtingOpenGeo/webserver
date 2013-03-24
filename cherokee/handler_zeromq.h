@@ -33,7 +33,7 @@
 #include "connection.h"
 #include "server-protected.h"
 
-#include <zmq.h>
+#include "zmq-shim.h"
 
 typedef struct {
 	cherokee_module_props_t   base;
@@ -41,8 +41,8 @@ typedef struct {
 	cuint_t                   io_threads;
 	void *                    context;
 	void                     *socket;
-	cherokee_encoder_props_t *encoder_props;
     CHEROKEE_MUTEX_T         (mutex);
+	cherokee_encoder_props_t *encoder_props;
 } cherokee_handler_zeromq_props_t;
 
 typedef struct {
