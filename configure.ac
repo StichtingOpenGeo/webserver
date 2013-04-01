@@ -2,7 +2,7 @@ dnl -*- mode: m4-mode -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_COPYRIGHT([
-Copyright (C) 2001-2012 Alvaro Lopez Ortega
+Copyright (C) 2001-2013 Alvaro Lopez Ortega
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of version 2 of the GNU General Public
@@ -25,7 +25,7 @@ AC_PREREQ([2.60])
 dnl Version
 m4_define([cherokee_major_version], [1])
 m4_define([cherokee_minor_version], [2])
-m4_define([cherokee_micro_version], [102])
+m4_define([cherokee_micro_version], [103])
 m4_define([cherokee_version], m4_format('%s.%s.%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version))
 
 dnl Init autoconf and automake
@@ -95,12 +95,6 @@ mod_suffix=$so_suffix
 
 AC_MSG_CHECKING([host platform characteristics])
 	case "$host" in
-	*-*-mingw*|*-*-cygwin*)
-		so_suffix=DLL
-		mod_suffix=$so_suffix
-	     os_string="Win32"
-          libdl=
-          ;;
 	*-*-linux*)
           libdl="-ldl"
           ;;
@@ -129,7 +123,7 @@ AC_MSG_CHECKING([host platform characteristics])
           libdl="-ldl"
           ;;
 	*)
-		AC_MSG_WARN([*** Please add $host to configure.in checks!])
+		AC_MSG_WARN([*** Please add $host to configure.ac checks!])
           libdl="-ldl"
           ;;
 esac
@@ -171,8 +165,6 @@ dnl
 AC_ARG_ENABLE(os_string, AC_HELP_STRING([--enable-os-string=STR], [Set a customized OS type string]), [os_string="$enableval"])
 AC_DEFINE_UNQUOTED(OS_TYPE, "${os_string}", [OS type])
 
-AM_CONDITIONAL(PLATFORM_WIN32, test x"$os_string" = "xWin32")
-
 dnl
 dnl Tracing
 dnl
@@ -199,28 +191,20 @@ AC_DEFINE_UNQUOTED(MOD_SUFFIX, "${mod_suffix}", [Dynamic modules extension])
 dnl
 dnl Libtool options
 dnl
-if test "$os_string" != "Win32"; then
-    # libtool option to control which symbols are exported
-    # right now, symbols starting with _ are not exported
-    LIBTOOL_EXPORT_OPTIONS='-export-symbols-regex "^[[^_]].*"'
-else
-    LIBTOOL_EXPORT_OPTIONS=
-fi
+LIBTOOL_EXPORT_OPTIONS=
 AC_SUBST(LIBTOOL_EXPORT_OPTIONS)
 
 dnl Set the Version
 AM_INIT_AUTOMAKE(cherokee, $VERSION)
 AM_MAINTAINER_MODE
 
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 AC_SUBST(VERSION)
 
 dnl Initialize Libtool
 m4_ifdef([LT_INIT],
   [LT_INIT([dlopen shared static win32-dll])],
-  [AC_LIBTOOL_DLOPEN
-   AC_LIBTOOL_WIN32_DLL
-   ])
+  [AC_LIBTOOL_DLOPEN])
 
 dnl Paths
 AC_PROG_CC
@@ -254,8 +238,8 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(endian.h machine/endian.h sys/machine.h sys/endian.h sys/isa_defs.h sys/utsname.h sys/poll.h poll.h )
 AC_CHECK_HEADERS(sys/socket.h sys/un.h netinet/in.h arpa/inet.h netinet/tcp.h sys/ioctl.h fcntl.h sys/ofcntl.h sys/time.h)
 AC_CHECK_HEADERS(sys/resource.h resource.h unistd.h syslog.h stdint.h inttypes.h error.h pwd.h sys/uio.h)
-AC_CHECK_HEADERS(pthread.h netdb.h stdarg.h sys/filio.h sys/varargs.h sys/select.h sys/mman.h sys/uio.h grp.h winsock.h)
-AC_CHECK_HEADERS(winsock.h winsock2.h sched.h execinfo.h)
+AC_CHECK_HEADERS(pthread.h netdb.h stdarg.h sys/filio.h sys/varargs.h sys/select.h sys/mman.h sys/uio.h grp.h)
+AC_CHECK_HEADERS(sched.h execinfo.h)
 
 AC_SYS_LARGEFILE
 
@@ -343,15 +327,6 @@ AC_CHECK_FUNC(poll, have_poll=yes)
 AC_CHECK_FUNC(kqueue, have_kqueue=yes)
 AC_CHECK_FUNC(select, have_select=yes)
 
-if test "x-$have_select" != "x-yes" -a "x-$ac_cv_header_winsock2_h" = "x-yes"; then
-     AC_MSG_CHECKING([for select in ws2_32])
-     AC_TRY_LINK([#include <winsock2.h>],
-				[select(0,0,0,0,0)],
-				[AC_MSG_RESULT(yes)
-				 have_win32_select=yes],
-				[AC_MSG_RESULT(no)])
-fi
-
 dnl
 dnl Epoll
 dnl
@@ -364,7 +339,7 @@ have_epoll=no
 if test "x$have_epoll_include" = "xyes" && test "x$wants_epoll" = "xyes"; then
  	AC_MSG_CHECKING(for epoll system call)
 
-     AC_RUN_IFELSE([
+     AC_RUN_IFELSE([AC_LANG_SOURCE([
 		#include <stdint.h>
 		#include <sys/param.h>
 		#include <sys/types.h>
@@ -381,7 +356,7 @@ if test "x$have_epoll_include" = "xyes" && test "x$wants_epoll" = "xyes"; then
 	        epfd = epoll_create(256);
 	    	   exit (epfd == -1 ? 1 : 0);
 		}
-	],
+	])],
 	have_epoll=yes,
 	have_epoll=no,
 	have_epoll=yes)
@@ -397,7 +372,7 @@ have_port=no
 if test "x$have_port_include" = "xyes"; then
     	AC_MSG_CHECKING(for event ports support)
 
-     AC_RUN_IFELSE([
+     AC_RUN_IFELSE([AC_LANG_SOURCE([
 		#include <stdint.h>
 		#include <unistd.h>
 		#include <port.h>
@@ -407,7 +382,7 @@ if test "x$have_port_include" = "xyes"; then
 		   port = port_create();
 	    	   exit (port < 0 ? 1 : 0);
 		}
-	],
+	])],
 	have_port=yes,
 	have_port=no,
 	have_port=cross)
@@ -436,16 +411,10 @@ if test "$have_poll" = yes; then
 fi
 AM_CONDITIONAL(COMPILE_POLL, test x"$have_poll" = "xyes")
 
-if test "$have_win32_select" = yes; then
-	AC_DEFINE(HAVE_WIN32_SELECT, 1, [Have Win32 select])
-fi
-AM_CONDITIONAL(COMPILE_WIN32_SELECT, test x"$have_win32_select" = "xyes")
-
 if test "$have_select" = yes; then
      AC_DEFINE(HAVE_SELECT, 1, [Have select])
 fi
-AM_CONDITIONAL(COMPILE_SELECT, test x"$have_select" = "xyes" -a x"$have_win32_select" != "xyes")
-
+AM_CONDITIONAL(COMPILE_SELECT, test x"$have_select" = "xyes")
 
 dnl
 dnl Check for inet_pton.  We have our own, but on Solaris the version in
@@ -626,12 +595,12 @@ AC_CHECK_FUNCS(syslog vsyslog strsep strcasestr memmove strerror bcopy strlcat)
 dnl
 dnl Check for Glib (usually Linux)
 dnl
-AC_PREPROC_IFELSE([
+AC_PREPROC_IFELSE([AC_LANG_SOURCE([
 #include <features.h>
 #ifndef __GLIBC__
     chokeme
 #endif
-], [
+])], [
     AC_DEFINE([HAVE_GLIBC], [1], [Define to 1 if you have glibc.])
     AC_DEFINE([_GNU_SOURCE], [1], [Define to 1 if you have glibc.])
 ])
@@ -1584,13 +1553,10 @@ packages/Makefile
 packages/osx/Makefile
 packages/osx/Info.plist
 packages/osx/Description.plist
-packages/windows/Makefile
-packages/windows/cherokee.nsi
 www/Makefile
 dbslayer/Makefile
 admin/Makefile
 admin/icons/Makefile
-admin/market/Makefile
 admin/plugins/Makefile
 admin/wizards/Makefile
 admin/static/Makefile
@@ -1615,7 +1581,6 @@ if test "$have_epoll"        = yes; then methods="${methods}epoll ";  fi
 if test "$have_kqueue"       = yes; then methods="${methods}kqueue "; fi
 if test "$have_poll"         = yes; then methods="${methods}poll ";   fi
 if test "$have_port"         = yes; then methods="${methods}port ";   fi
-if test "$have_win32_select" = yes; then methods="${methods}win32 ";  fi
 if test "$have_select"       = yes; then methods="${methods}select";  fi
 
 if test "$use_crypt_r" = "yes"; then

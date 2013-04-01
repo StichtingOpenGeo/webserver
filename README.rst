@@ -22,6 +22,10 @@ or, for Yum-based systems, such as RedHat, CentOS or Fedora::
 
     sudo yum install autoconf automake libtool
 
+or, for Pacman-based systems such as ArchLinux::
+
+    sudo pacman -Sy autoconf automake libtool
+
 To check out the code from GitHub, including all dependencies that are
 specified as Git submodules, do the following::
 
@@ -192,3 +196,15 @@ How to create a self signed certificate for TLS
 
     openssl req -days 1000 -new -x509 -nodes -out /etc/cherokee/ssl/cherokee.pem -keyout /etc/cherokee/ssl/cherokee.pem
 
+How to create a release .tar.gz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+    git clone --recursive http://github.com/cherokee/webserver.git
+    cd webserver
+    ./autogen.sh
+    make dist-gzip
+
+The resulting file will be created in the current directory and will be
+a ``.tar.gz`` archive.
