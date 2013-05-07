@@ -52,6 +52,8 @@ uwsgi.py \
 wildcard.py \
 gzip.py \
 deflate.py \
+zeromq.py \
+tmi.py \
 drop.py
 
 EXTRA_DIST = \
