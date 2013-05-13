@@ -337,6 +337,20 @@ tmp_dh_cb (SSL *ssl, int export, int keylen)
 	return NULL;
 }
 
+static int verify_callback (int preverify_ok, X509_STORE_CTX *ctx)
+{
+	X509 *peer_certificate = X509_STORE_CTX_get_current_cert(ctx);
+	if (peer_certificate) {
+		BIO *mem = BIO_new(BIO_s_mem());
+		char *ptr;
+		X509_print (mem, peer_certificate);
+		BIO_get_mem_data(mem, &ptr);
+		TRACE (ENTRIES, "SSL: %s", ptr);
+		BIO_free (mem);
+	}
+
+	return preverify_ok;
+}
 
 static ret_t
 _vserver_new (cherokee_cryptor_t          *cryp,
@@ -489,7 +503,11 @@ _vserver_new (cherokee_cryptor_t          *cryp,
 		}
 	}
 
+#ifdef TRACE_ENABLED
+	SSL_CTX_set_verify (n->context, verify_mode, verify_callback);
+#else
 	SSL_CTX_set_verify (n->context, verify_mode, NULL);
+#endif
 	SSL_CTX_set_verify_depth (n->context, vsrv->verify_depth);
 
 	SSL_CTX_set_read_ahead (n->context, 1);
