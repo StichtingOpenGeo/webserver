@@ -1,5 +1,7 @@
 ## Cherokee: cherokee/Makefile.am  -*- makefile -*-
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 AM_CPPFLAGS = \
 -I${top_srcdir} \
 $(PTHREAD_CFLAGS)
@@ -577,8 +579,7 @@ handler_render_rrd.h \
 logo.inc
 
 libplugin_render_rrd_la_LDFLAGS = $(module_ldflags)
-libplugin_render_rrd_la_SOURCES = $(handler_render_rrd)
-libplugin_render_rrd_la_LIBADD  = $(dynamic_handler_file_lib)
+libplugin_render_rrd_la_SOURCES = $(handler_render_rrd) $(handler_file)
 
 if STATIC_HANDLER_RENDER_RRD
 static_handler_render_rrd_src = $(handler_render_rrd)
@@ -600,8 +601,7 @@ handler_cgi.c \
 handler_cgi.h
 
 libplugin_cgi_la_LDFLAGS = $(module_ldflags)
-libplugin_cgi_la_SOURCES = $(handler_cgi)
-libplugin_cgi_la_LIBADD  = $(dynamic_handler_file_lib)
+libplugin_cgi_la_SOURCES = $(handler_cgi) $(handler_file)
 
 if STATIC_HANDLER_CGI
 static_handler_cgi_src = $(handler_cgi)
@@ -623,8 +623,7 @@ handler_scgi.h \
 handler_scgi.c
 
 libplugin_scgi_la_LDFLAGS = $(module_ldflags)
-libplugin_scgi_la_SOURCES = $(handler_scgi)
-libplugin_scgi_la_LIBADD  = $(dynamic_handler_file_lib)
+libplugin_scgi_la_SOURCES = $(handler_scgi) $(handler_file)
 
 if STATIC_HANDLER_SCGI
 static_handler_scgi_src = $(handler_scgi)
@@ -647,8 +646,7 @@ handler_fcgi.h \
 handler_fcgi.c
 
 libplugin_fcgi_la_LDFLAGS = $(module_ldflags)
-libplugin_fcgi_la_SOURCES = $(handler_fcgi)
-libplugin_fcgi_la_LIBADD  = $(dynamic_handler_file_lib)
+libplugin_fcgi_la_SOURCES = $(handler_fcgi) $(handler_file)
 
 if STATIC_HANDLER_FCGI
 static_handler_fcgi_src = $(handler_fcgi)
@@ -670,8 +668,7 @@ handler_uwsgi.h \
 handler_uwsgi.c
 
 libplugin_uwsgi_la_LDFLAGS = $(module_ldflags)
-libplugin_uwsgi_la_SOURCES = $(handler_uwsgi)
-libplugin_uwsgi_la_LIBADD  = $(dynamic_handler_file_lib)
+libplugin_uwsgi_la_SOURCES = $(handler_uwsgi) $(handler_file)
 
 if STATIC_HANDLER_UWSGI
 static_handler_uwsgi_src = $(handler_uwsgi)
@@ -1644,8 +1641,9 @@ dwriter.h \
 dwriter.c \
 limiter.h \
 limiter.c \
-spawner.h \
-spawner.c \
+services.h \
+services-common.c \
+services-client.c \
 collector.h \
 collector.c \
 header_op.h \
@@ -1791,8 +1789,8 @@ libcherokee-server.la
 #
 # Cherokee
 #
-cherokee_SOURCES = main.c
-cherokee_LDADD   = $(PTHREAD_LIBS) $(RT_LIBS)
+cherokee_SOURCES = main.c services-common.c services-server.c
+cherokee_LDADD   = $(PTHREAD_LIBS) $(RT_LIBS) libcherokee-base.la
 
 #
 # Cherokee admin

@@ -5,7 +5,7 @@
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
 #
-# Copyright (C) 2001-2013 Alvaro Lopez Ortega
+# Copyright (C) 2001-2014 Alvaro Lopez Ortega
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 2 of the GNU General Public
@@ -107,6 +107,12 @@ def Clone():
     next = CTK.cfg.get_next_entry_prefix ('vserver!%s!rule'%(vsrv))
 
     CTK.cfg.clone ('vserver!%s!rule!%s'%(vsrv,rule), next)
+    
+    if CTK.cfg.get_val ("%s!match"%(next)) == "default":
+        # TODO: ideally create an any match, opposed to regular expression
+        CTK.cfg["%s!match"%(next)] = 'request'
+        CTK.cfg["%s!match!request"%(next)] = '/.*'
+
     return CTK.cfg_reply_ajax_ok()
 
 

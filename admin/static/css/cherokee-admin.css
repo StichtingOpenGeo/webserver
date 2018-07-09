@@ -3,7 +3,7 @@
  * Authors:
  *      Alvaro Lopez Ortega <alvaro@alobbs.com>
  *
- * Copyright (C) 2001-2013 Alvaro Lopez Ortega
+ * Copyright (C) 2001-2014 Alvaro Lopez Ortega
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -490,13 +490,6 @@ img.icon_chooser_selected {
 #login-dialog input[type="text"], #login-dialog input[type="password"] { width: 256px; }
 
 
-#bottom-box { padding: 8px 0; margin: 8px 16px; }
-#bottom-box h2 { font-size: 16px; margin-bottom: 16px; }
-#enterprise-box { width: 256px; float: right; }
-#enterprise-notice { background: #fff url(/static/images/other/octality-logo.png) no-repeat top 30px; padding-top:64px; }
-#enterprise-link { text-align: right; margin-top: 16px; color: #def; }
-
-
 #proud-users { background: transparent url(/static/images/other/proud.png) no-repeat right top; padding-right: 32px; }
 #proud-link { text-align: right; margin-top: 8px; color: #def; }
 #proud-link a { margin: 0 4px; }
@@ -753,7 +746,7 @@ img.icon_chooser_selected {
 
 #mh-type { width: 370px; }
 #mh-ext { width: 300px; }
-#mh-age { width: 132px; }
+#mh-age { width: 130px; }
 #mh-del { width: 32px; }
 
 .mimeentry {
@@ -774,8 +767,8 @@ img.icon_chooser_selected {
 .md-type span { margin-top: 4px; display: block; }
 .md-ext { width: 300px; }
 .md-ext input { width: 300px; }
-.md-age { width: 132px; }
-.md-age input { width: 132px; }
+.md-age { width: 130px; }
+.md-age input { width: 130px; }
 .md-del { width: 40px; display: block; text-align: center; }
 .md-del img { margin-top: 4px; }
 
@@ -966,11 +959,11 @@ img.icon_chooser_selected {
 
 
 #halt-admin-box { text-align: center; padding-top: 64px; }
-#halt-admin-box a { color: #b5c8db; font-size: 90%; }
+#halt-admin-box a { font-size: 90%; }
 #halt-admin-box a:hover { color: #c00; }
 
 #maintenance-removal { overflow: auto; overflow-x: hidden; height: 260px; }
-#maintenance-removal-list { table-layout: fixed; width: 100%; border-collapse: collapse; border: 1px solid #cde; }{}
+#maintenance-removal-list { table-layout: fixed; width: 100%; border-collapse: collapse; border: 1px solid #cde; }
 #maintenance-removal-list th { background: #e6f3ff url(/static/images/bg-th.png) repeat-x; border: none; border-bottom: 2px solid #27c; padding: 8px 4px; }
 #maintenance-removal-list td { border-bottom: 1px solid #cde; padding: 4px; }
 

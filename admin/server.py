@@ -7,7 +7,7 @@
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
 #
-# Copyright (C) 2001-2013 Alvaro Lopez Ortega
+# Copyright (C) 2001-2014 Alvaro Lopez Ortega
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 2 of the GNU General Public
@@ -23,6 +23,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
+
+# Remote Debugging
+# Uncomment the following two lines to enable remote debugging
+#import pydevd
+#pydevd.settrace('localhost', port=9091, stdoutToServer=True, stderrToServer=True)
 
 # System
 import os

@@ -5,7 +5,7 @@
  * Authors:
  *      Alvaro Lopez Ortega <alvaro@alobbs.com>
  *
- * Copyright (C) 2001-2013 Alvaro Lopez Ortega
+ * Copyright (C) 2001-2014 Alvaro Lopez Ortega
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -56,8 +56,8 @@ cherokee_handler_streaming_props_free (cherokee_handler_streaming_props_t *props
 
 ret_t
 cherokee_handler_streaming_configure (cherokee_config_node_t   *conf,
-				      cherokee_server_t        *srv,
-				      cherokee_module_props_t **_props)
+                                      cherokee_server_t        *srv,
+                                      cherokee_module_props_t **_props)
 {
 	ret_t                               ret;
 	cherokee_list_t                    *i;
@@ -67,7 +67,7 @@ cherokee_handler_streaming_configure (cherokee_config_node_t   *conf,
 		CHEROKEE_NEW_STRUCT (n, handler_streaming_props);
 
 		cherokee_handler_props_init_base (HANDLER_PROPS(n),
-			MODULE_PROPS_FREE(cherokee_handler_streaming_props_free));
+		     MODULE_PROPS_FREE(cherokee_handler_streaming_props_free));
 
 		n->props_file       = NULL;
 		n->auto_rate        = true;
@@ -92,7 +92,7 @@ cherokee_handler_streaming_configure (cherokee_config_node_t   *conf,
 			props->auto_rate_factor = strtof (subconf->val.buf, NULL);
 
 		} else if (equal_buf_str (&subconf->key, "rate_boost")) {
-			ret = cherokee_atoi (subconf->val.buf, &props->auto_rate_boost);
+			ret = cherokee_atou (subconf->val.buf, &props->auto_rate_boost);
 			if (ret != ret_ok) return ret_error;
 		}
 	}
@@ -117,8 +117,8 @@ cherokee_handler_streaming_free (cherokee_handler_streaming_t *hdl)
 
 ret_t
 cherokee_handler_streaming_new (cherokee_handler_t      **hdl,
-				void                     *cnt,
-				cherokee_module_props_t  *props)
+                                void                     *cnt,
+                                cherokee_module_props_t  *props)
 {
 	ret_t ret;
 	CHEROKEE_NEW_STRUCT (n, handler_streaming);
@@ -135,7 +135,7 @@ cherokee_handler_streaming_new (cherokee_handler_t      **hdl,
 	/* Instance the sub-handler
 	 */
 	ret = cherokee_handler_file_new ((cherokee_handler_t **)&n->handler_file, cnt,
-					 MODULE_PROPS(PROP_STREAMING(props)->props_file));
+	                                 MODULE_PROPS(PROP_STREAMING(props)->props_file));
 	if (ret != ret_ok) {
 		return ret_ok;
 	}
@@ -163,7 +163,7 @@ cherokee_handler_streaming_new (cherokee_handler_t      **hdl,
 
 static ret_t
 parse_time_start (cherokee_handler_streaming_t *hdl,
-		  cherokee_buffer_t            *value)
+                  cherokee_buffer_t            *value)
 {
 	float                  start;
 	char                  *end    = NULL;
@@ -190,7 +190,7 @@ error:
 
 static ret_t
 parse_offset_start (cherokee_handler_streaming_t *hdl,
-		    cherokee_buffer_t            *value)
+                    cherokee_buffer_t            *value)
 {
 	long                   start;
 	char                  *end    = NULL;
@@ -267,8 +267,8 @@ seek_mp3 (cherokee_handler_streaming_t *hdl)
 
 static ret_t
 set_rate (cherokee_handler_streaming_t *hdl,
-	  cherokee_connection_t        *conn,
-	  long                          rate)
+          cherokee_connection_t        *conn,
+          long                          rate)
 {
 	cherokee_handler_streaming_props_t *props = HDL_STREAMING_PROP(hdl);
 
@@ -388,8 +388,8 @@ set_auto_rate (cherokee_handler_streaming_t *hdl)
 	ret = set_rate (hdl, conn, rate);
 
 	cherokee_avl_add (&_streaming_cache,
-			  &hdl->local_file,
-			  INT_TO_POINTER(rate));
+	                  &hdl->local_file,
+	                  INT_TO_POINTER(rate));
 
 	return ret;
 }
@@ -493,7 +493,7 @@ out:
 
 ret_t
 cherokee_handler_streaming_add_headers (cherokee_handler_streaming_t *hdl,
-					cherokee_buffer_t            *buffer)
+                                        cherokee_buffer_t            *buffer)
 {
 	ret_t ret;
 
@@ -510,7 +510,7 @@ cherokee_handler_streaming_add_headers (cherokee_handler_streaming_t *hdl,
 
 ret_t
 cherokee_handler_streaming_step (cherokee_handler_streaming_t *hdl,
-				 cherokee_buffer_t            *buffer)
+                                 cherokee_buffer_t            *buffer)
 {
 	cherokee_connection_t *conn = HANDLER_CONN(hdl);
 

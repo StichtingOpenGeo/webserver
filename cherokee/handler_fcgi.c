@@ -5,7 +5,7 @@
  * Authors:
  *      Alvaro Lopez Ortega <alvaro@alobbs.com>
  *
- * Copyright (C) 2001-2013 Alvaro Lopez Ortega
+ * Copyright (C) 2001-2014 Alvaro Lopez Ortega
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -46,8 +46,8 @@
 
 
 static void set_env_pair (cherokee_handler_cgi_base_t *cgi_base,
-			  const char *key, int key_len,
-			  const char *val, int val_len);
+                          const char *key, int key_len,
+                          const char *val, int val_len);
 
 /* Plug-in initialization
  */
@@ -97,12 +97,14 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cheroke
 	len     = (header->contentLengthB0 | (header->contentLengthB1 << 8));
 	data    = inbuf->buf +  FCGI_HEADER_LEN;
 
-/*	printf ("have %d, hdr=%d exp_len=%d pad=%d\n", inbuf->len, FCGI_HEADER_LEN, len, padding); */
+	UNUSED (id);
+
+	TRACE (ENTRIES, "have %d, hdr=%d exp_len=%d pad=%d\n", inbuf->len, FCGI_HEADER_LEN, len, padding);
 
 	/* Is the package complete?
 	 */
 	if (len + padding > inbuf->len - FCGI_HEADER_LEN) {
-/*		printf ("Incomplete: %d < %d\n", len + padding, inbuf->len - FCGI_HEADER_LEN); */
+		TRACE (ENTRIES, "Incomplete: %d < %d\n", len + padding, inbuf->len - FCGI_HEADER_LEN);
 		return ret_ok;
 	}
 
@@ -110,7 +112,7 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cheroke
 	 */
 	switch (type) {
 	case FCGI_STDERR:
-/*		printf ("READ:STDERR (%d): %s", len, data?data:""); */
+		TRACE (ENTRIES, "READ:STDERR (%d): %s", len, data?data:"");
 
 		LOG_ERROR (CHEROKEE_ERROR_HANDLER_FCGI_STDERR, data);
 
@@ -122,12 +124,12 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cheroke
 		break;
 
 	case FCGI_STDOUT:
-/*		printf ("READ:STDOUT eof=%d: %d", HDL_CGI_BASE(hdl)->got_eof, len); */
+		TRACE (ENTRIES, "READ:STDOUT eof=%d: %d", HDL_CGI_BASE(hdl)->got_eof, len);
 		cherokee_buffer_add (outbuf, data, len);
 		break;
 
 	case FCGI_END_REQUEST:
-/*		printf ("READ:END"); */
+		TRACE (ENTRIES, "READ:END");
 		HDL_CGI_BASE(hdl)->got_eof = true;
 		break;
 
@@ -136,7 +138,7 @@ process_package (cherokee_handler_fcgi_t *hdl, cherokee_buffer_t *inbuf, cheroke
 	}
 
 	cherokee_buffer_move_to_begin (inbuf, len + FCGI_HEADER_LEN + padding);
-/*	printf ("- FCGI left %d\n", inbuf->len); */
+	TRACE (ENTRIES, "- FCGI left %d\n", inbuf->len);
 	return ret_eagain;
 }
 
@@ -170,8 +172,8 @@ read_from_fcgi (cherokee_handler_cgi_base_t *cgi, cherokee_buffer_t *buffer)
 	switch (ret) {
 	case ret_eagain:
 		ret = cherokee_thread_deactive_to_polling (HANDLER_THREAD(cgi), HANDLER_CONN(cgi),
-							   fcgi->socket.socket, FDPOLL_MODE_READ,
-							   false);
+		                                           fcgi->socket.socket, FDPOLL_MODE_READ,
+		                                           false);
 		if (unlikely (ret != ret_ok)) {
 			cgi->got_eof = true;
 			return ret_error;
@@ -213,8 +215,8 @@ props_free (cherokee_handler_fcgi_props_t *props)
 
 ret_t
 cherokee_handler_fcgi_configure (cherokee_config_node_t   *conf,
-				 cherokee_server_t        *srv,
-				 cherokee_module_props_t **_props)
+                                 cherokee_server_t        *srv,
+                                 cherokee_module_props_t **_props)
 {
 	ret_t                          ret;
 	cherokee_list_t               *i;
@@ -226,7 +228,7 @@ cherokee_handler_fcgi_configure (cherokee_config_node_t   *conf,
 		CHEROKEE_NEW_STRUCT (n, handler_fcgi_props);
 
 		cherokee_handler_cgi_base_props_init_base (PROP_CGI_BASE(n),
-							   MODULE_PROPS_FREE(props_free));
+		                                           MODULE_PROPS_FREE(props_free));
 
 		n->balancer = NULL;
 
@@ -234,6 +236,11 @@ cherokee_handler_fcgi_configure (cherokee_config_node_t   *conf,
 	}
 
 	props = PROP_FCGI(*_props);
+
+	/* Init base class
+	 */
+	ret = cherokee_handler_cgi_base_configure (conf, srv, _props);
+	if (ret != ret_ok) return ret;
 
 	/* Parse the configuration tree
 	 */
@@ -245,11 +252,6 @@ cherokee_handler_fcgi_configure (cherokee_config_node_t   *conf,
 			if (ret != ret_ok) return ret;
 		}
 	}
-
-	/* Init base class
-	 */
-	ret = cherokee_handler_cgi_base_configure (conf, srv, _props);
-	if (ret != ret_ok) return ret;
 
 	/* Final checks
 	 */
@@ -270,7 +272,7 @@ cherokee_handler_fcgi_new (cherokee_handler_t **hdl, void *cnt, cherokee_module_
 	/* Init the base class
 	 */
 	cherokee_handler_cgi_base_init (HDL_CGI_BASE(n), cnt, PLUGIN_INFO_HANDLER_PTR(fcgi),
-					HANDLER_PROPS(props), set_env_pair, read_from_fcgi);
+	                                HANDLER_PROPS(props), set_env_pair, read_from_fcgi);
 
 	/* Virtual methods
 	 */
@@ -341,8 +343,8 @@ fcgi_build_request_body (FCGI_BeginRequestRecord *request)
 
 static void
 set_env_pair (cherokee_handler_cgi_base_t *cgi_base,
-	      const char *key, int key_len,
-	      const char *val, int val_len)
+              const char *key, int key_len,
+              const char *val, int val_len)
 {
 	int                       len;
 	FCGI_BeginRequestRecord   request;
@@ -430,8 +432,8 @@ add_extra_fcgi_env (cherokee_handler_fcgi_t *hdl, cuint_t *last_header_offset)
 	 */
 	if (cgi_base->executable.len > 0) {
 		set_env (cgi_base, "SCRIPT_FILENAME",
-			 cgi_base->executable.buf,
-			 cgi_base->executable.len);
+		         cgi_base->executable.buf,
+		         cgi_base->executable.len);
 	} else {
 		cherokee_buffer_clean (&buffer);
 
@@ -550,7 +552,7 @@ connect_to_server (cherokee_handler_fcgi_t *hdl)
 		}
 	} else {
 		ret = cherokee_source_interpreter_connect_polling (SOURCE_INT(hdl->src_ref),
-								   &hdl->socket, conn);
+		                                                   &hdl->socket, conn);
 	}
 
 	return ret;
@@ -559,7 +561,7 @@ connect_to_server (cherokee_handler_fcgi_t *hdl)
 
 static ret_t
 do_send (cherokee_handler_fcgi_t *hdl,
-	 cherokee_buffer_t       *buffer)
+         cherokee_buffer_t       *buffer)
 {
 	ret_t                  ret;
 	size_t                 written = 0;
@@ -587,7 +589,7 @@ do_send (cherokee_handler_fcgi_t *hdl,
 
 static ret_t
 send_post (cherokee_handler_fcgi_t *hdl,
-	   cherokee_buffer_t       *buf)
+           cherokee_buffer_t       *buf)
 {
 	ret_t                  ret;
 	int                    prev_buf_len;
@@ -621,7 +623,7 @@ send_post (cherokee_handler_fcgi_t *hdl,
 		 */
 		if (buf->len > sizeof(FCGI_Header)) {
 			fcgi_build_header ((FCGI_Header *)buf->buf, FCGI_STDIN, 1,
-					   buf->len - sizeof(FCGI_Header), 0);
+			   buf->len - sizeof(FCGI_Header), 0);
 		}
 
 		/* Close STDIN if it was the last chunck
@@ -640,7 +642,7 @@ send_post (cherokee_handler_fcgi_t *hdl,
 
 			ret = do_send (hdl, buf);
 			switch (ret) {
-                        case ret_ok:
+			case ret_ok:
 				/* Did something, increase timeout
 				 */
 				if (buf->len < prev_buf_len) {
@@ -652,26 +654,26 @@ send_post (cherokee_handler_fcgi_t *hdl,
 				if (buf->len > 0) {
 					return ret_deny;
 				}
-                                break;
-                        case ret_eagain:
+				break;
+			case ret_eagain:
 				/* EAGAIN on write */
 				return ret_deny;
-                        case ret_eof:
-                        case ret_error:
-                                return ret_error;
-                        default:
+			case ret_eof:
+			case ret_error:
+				return ret_error;
+			default:
 				RET_UNKNOWN(ret);
 				return ret_error;
-                        }
+			}
 		}
 
 		/* Next iteration
 		 */
 		if (! cherokee_buffer_is_empty (buf)) {
 			cherokee_thread_deactive_to_polling (HANDLER_THREAD(hdl),
-							     HANDLER_CONN(hdl),
-							     hdl->socket.socket,
-							     FDPOLL_MODE_WRITE, false);
+			                                     HANDLER_CONN(hdl),
+			                                     hdl->socket.socket,
+			                                     FDPOLL_MODE_WRITE, false);
 			return ret_deny;
 		}
 
@@ -717,7 +719,7 @@ cherokee_handler_fcgi_init (cherokee_handler_fcgi_t *hdl)
 	case hcgi_phase_connect:
 		TRACE (ENTRIES, "Init: %s\n", "connect");
 
- 		/* Connect
+		/* Connect
 		 */
 		ret = connect_to_server (hdl);
 		switch (ret) {

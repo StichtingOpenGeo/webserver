@@ -2,7 +2,7 @@ dnl -*- mode: m4-mode -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_COPYRIGHT([
-Copyright (C) 2001-2013 Alvaro Lopez Ortega
+Copyright (C) 2001-2014 Alvaro Lopez Ortega
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of version 2 of the GNU General Public
@@ -19,13 +19,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 USA
 ])
 
-dnl require autoconf 2.60
-AC_PREREQ([2.60])
+dnl require autoconf 2.68
+AC_PREREQ([2.68])
 
 dnl Version
 m4_define([cherokee_major_version], [1])
 m4_define([cherokee_minor_version], [2])
-m4_define([cherokee_micro_version], [103])
+m4_define([cherokee_micro_version], [104])
 m4_define([cherokee_version], m4_format('%s.%s.%s', cherokee_major_version, cherokee_minor_version, cherokee_micro_version))
 
 dnl Init autoconf and automake
@@ -85,6 +85,8 @@ AC_DEFINE_UNQUOTED(PACKAGE_PATCH_VERSION, "${PACKAGE_PATCH_VERSION}", [Version s
 dnl Initial CFLAGS
 AC_MSG_CHECKING(initial CFLAGS)
 AC_MSG_RESULT($CFLAGS)
+
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 dnl Check for CPU / vendor / OS
 AC_CANONICAL_HOST
@@ -195,16 +197,14 @@ LIBTOOL_EXPORT_OPTIONS=
 AC_SUBST(LIBTOOL_EXPORT_OPTIONS)
 
 dnl Set the Version
-AM_INIT_AUTOMAKE(cherokee, $VERSION)
+AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
 AC_CONFIG_HEADERS(config.h)
 AC_SUBST(VERSION)
 
 dnl Initialize Libtool
-m4_ifdef([LT_INIT],
-  [LT_INIT([dlopen shared static win32-dll])],
-  [AC_LIBTOOL_DLOPEN])
+m4_ifdef([LT_INIT], [LT_INIT([dlopen shared static])], [AC_LIBTOOL_DLOPEN])
 
 dnl Paths
 AC_PROG_CC
@@ -264,7 +264,6 @@ AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned int)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(size_t)
-AC_CHECK_SIZEOF(sig_atomic_t)
 AC_CHECK_SIZEOF(time_t)
 
 AC_CACHE_CHECK([for long long],samba_cv_have_longlong,[
@@ -1102,6 +1101,8 @@ if test "$WITH_OPENSSL" != "no"; then
 	   AC_SUBST(LIBSSL_CFLAGS)
 
 	   AC_DEFINE(HAVE_OPENSSL, 1, [Have OpenSSL library])
+	   AC_PATH_PROG([OPENSSL_BIN], [openssl])
+	   AC_SUBST(OPENSSL_BIN)
     fi
 fi
 AC_MSG_CHECKING(for libssl)
@@ -1383,7 +1384,10 @@ fi
 
 dnl Last, desperate option
 if test "x$PHPCGI" = "x"; then
-   PHPCGI="php-cgi"
+   php-cgi -v 1>/dev/null 2>&1
+   if test "$?" != "0"; then
+      PHPCGI="php-cgi"
+   fi
 fi
 
 AC_SUBST(PHPCGI)

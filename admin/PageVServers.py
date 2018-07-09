@@ -5,7 +5,7 @@
 # Authors:
 #      Alvaro Lopez Ortega <alvaro@alobbs.com>
 #
-# Copyright (C) 2001-2013 Alvaro Lopez Ortega
+# Copyright (C) 2001-2014 Alvaro Lopez Ortega
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 2 of the GNU General Public
@@ -261,6 +261,7 @@ class Render:
                         self.JS_to_trigger('submit_success'))
 
             button = CTK.Button('<img src="/static/images/panel-new.png" />', {'id': 'vserver-new-button', 'class': 'panel-button', 'title': _('Add New Virtual Server')})
+	    # JS_ACTIVATE_FIRST will move the left selection pane inside the dialog up.
             button.bind ('click',
                          JS_ACTIVATE_FIRST %(dialog.id) +
                          dialog.JS_to_show())

@@ -5,7 +5,7 @@
  * Authors:
  *      Alvaro Lopez Ortega <alvaro@alobbs.com>
  *
- * Copyright (C) 2001-2013 Alvaro Lopez Ortega
+ * Copyright (C) 2001-2014 Alvaro Lopez Ortega
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -91,9 +91,9 @@ cherokee_fdpoll_get_fdlimits (cherokee_poll_type_t type, cuint_t *sys_fd_limit, 
 
 ret_t
 cherokee_fdpoll_new (cherokee_fdpoll_t    **fdp,
-		     cherokee_poll_type_t   type,
-		     int                    sys_fd_limit,
-		     int                    fd_limit)
+                     cherokee_poll_type_t   type,
+                     int                    sys_fd_limit,
+                     int                    fd_limit)
 {
 	/* Set default values if needed
 	 */
