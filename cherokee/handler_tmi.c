@@ -99,13 +99,12 @@ cherokee_handler_tmi_init (cherokee_handler_tmi_t *hdl)
 ret_t
 cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
 {
-	zmq_msg_t message;
-	int					  re;
+	zmq_msg_t				message;
+	int					  	re;
 	ret_t					ret;
-	ret_t					ret_final;
 	cherokee_buffer_t	   *post = &HANDLER_THREAD(hdl)->tmp_buf1;
-	cherokee_buffer_t	   *encoded = &HANDLER_THREAD(hdl)->tmp_buf2;
-	cherokee_connection_t   *conn = HANDLER_CONN(hdl);
+	cherokee_buffer_t	   *out  = &HANDLER_THREAD(hdl)->tmp_buf2;
+	cherokee_connection_t  *conn = HANDLER_CONN(hdl);
 
 	/* Check for the post info
 	 */
@@ -138,23 +137,23 @@ cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
 	TRACE (ENTRIES, "Post contains: '%s'\n", post->buf);
 
 	re = cherokee_post_read_finished (&conn->post);
-	ret_final = re ? ret_ok : ret_eagain;
+	ret = re ? ret_ok : ret_eagain;
 
-	cherokee_buffer_clean(encoded);
 	if (hdl->encoder != NULL) {
+		cherokee_buffer_clean(out);
 	   	if (ret == ret_ok) {
-			cherokee_encoder_flush(hdl->encoder, post, encoded);
+			cherokee_encoder_flush(hdl->encoder, post, out);
 		} else {
-			cherokee_encoder_encode(hdl->encoder, post, encoded);
+			cherokee_encoder_encode(hdl->encoder, post, out);
 		}
-	} else {
-		encoded = post;
+
+		post = out;
 	}
 
 	cherokee_buffer_add_buffer(&hdl->output, post);
 
-	if (ret_final == ret_ok) {
-		cherokee_buffer_t	 *tmp  = &HANDLER_THREAD(hdl)->tmp_buf1;
+	if (ret == ret_ok) {
+		cherokee_buffer_t	         *tmp  = &HANDLER_THREAD(hdl)->tmp_buf1;
 		cherokee_handler_tmi_props_t *props = HANDLER_TMI_PROPS(hdl);
 		zmq_msg_t envelope;
 		zmq_msg_t message;
@@ -221,7 +220,7 @@ cherokee_handler_tmi_read_post (cherokee_handler_tmi_t *hdl)
 #endif
 	}
 
-	return ret_final;
+	return ret;
 }
 
 ret_t
