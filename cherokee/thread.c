@@ -65,7 +65,7 @@ thread_update_bogo_now (cherokee_thread_t *thd)
 
 	/* Update struct tm
 	 */
-	cherokee_bogotime_lock_read();
+	// cherokee_bogotime_lock_read();
 
 	memcpy (&thd->bogo_now_tmgmt, &cherokee_bogonow_tmgmt, sizeof(struct tm));
 	memcpy (&thd->bogo_now_tmloc, &cherokee_bogonow_tmloc, sizeof(struct tm));
@@ -75,7 +75,7 @@ thread_update_bogo_now (cherokee_thread_t *thd)
 	cherokee_buffer_clean (&thd->bogo_now_strgmt);
 	cherokee_buffer_add_buffer (&thd->bogo_now_strgmt, &cherokee_bogonow_strgmt);
 
-	cherokee_bogotime_release();
+	// cherokee_bogotime_release();
 }
 
 
