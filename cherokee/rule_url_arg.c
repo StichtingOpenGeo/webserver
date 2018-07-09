@@ -41,11 +41,8 @@ check_argument (cherokee_rule_url_arg_t *rule,
                 cherokee_buffer_t       *value)
 {
 	int re;
-
-	if (value == NULL) {
-		TRACE (ENTRIES, "Empty parameter value\n");
-		return ret_not_found;
-	}
+	cherokee_buffer_t empty = CHEROKEE_BUF_INIT;
+	if (value == NULL) value = &empty;
 
 	/* Check whether it matches
 	 */
@@ -124,6 +121,8 @@ match (cherokee_rule_url_arg_t  *rule,
 			return ret_not_found;
 		}
 
+		if (rule->match.len == 0) return ret_ok;
+
 		return check_argument (rule, value);
 	}
 
@@ -151,11 +150,6 @@ configure (cherokee_rule_url_arg_t   *rule,
 	/* Read the matching reg-ex
 	 */
 	ret = cherokee_config_node_copy (conf, "match", &rule->match);
-	if (ret != ret_ok) {
-		LOG_ERROR (CHEROKEE_ERROR_RULE_NO_PROPERTY,
-		           RULE(rule)->priority, "match");
-		return ret_error;
-	}
 
 	/* Read the optional argument
 	 */
@@ -163,13 +157,15 @@ configure (cherokee_rule_url_arg_t   *rule,
 
 	/* Compile the regular expression
 	 */
-	ret = cherokee_regex_table_add (regexs, rule->match.buf);
-	if (ret != ret_ok)
-		return ret;
+	if (rule->match.len > 0) {
+		ret = cherokee_regex_table_add (regexs, rule->match.buf);
+		if (ret != ret_ok)
+			return ret;
 
-	ret = cherokee_regex_table_get (regexs, rule->match.buf, &rule->pcre);
-	if (ret != ret_ok)
-		return ret;
+		ret = cherokee_regex_table_get (regexs, rule->match.buf, &rule->pcre);
+		if (ret != ret_ok)
+			return ret;
+	}
 
 	return ret_ok;
 }
